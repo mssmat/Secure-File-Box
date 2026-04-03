@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Secure File Box</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121933;
+      --panel-2:#182142;
+      --text:#eef2ff;
+      --muted:#aeb8da;
+      --line:#2d3a6b;
+      --accent:#7cc7ff;
+      --accent-2:#8ef2c2;
+      --danger:#ff9898;
+      --warn:#ffd36c;
+      --shadow:0 14px 40px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    body[data-theme="light"]{
+      --bg:#f4f7fb;
+      --panel:#ffffff;
+      --panel-2:#eef3fb;
+      --text:#162033;
+      --muted:#5f6b85;
+      --line:#cfd9ec;
+      --accent:#2d7ff9;
+      --accent-2:#24b47e;
+      --danger:#d9475c;
+      --warn:#b7791f;
+      --shadow:0 14px 36px rgba(31,48,86,.10);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+      background:
+        radial-gradient(1200px 500px at 100% -10%, rgba(124,199,255,.18), transparent 55%),
+        radial-gradient(900px 500px at -10% 0%, rgba(142,242,194,.12), transparent 50%),
+        linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #000 12%));
+      color:var(--text);
+      line-height:1.55;
+      transition:background .2s ease,color .2s ease;
+    }
+    .wrap{
+      max-width:1120px;
+      margin:0 auto;
+      padding:20px 16px 64px;
+    }
+    .hero{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .title{
+      font-size:clamp(1.5rem, 3.8vw, 2.4rem);
+      font-weight:800;
+      letter-spacing:.01em;
+      margin:0;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      font-size:.98rem;
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:18px 0 16px;
+    }
+    .tab{
+      appearance:none;
+      border:1px solid var(--line);
+      background:color-mix(in srgb, var(--panel-2) 55%, transparent);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:.94rem;
+      min-height:42px;
+    }
+    .tab.active{
+      background:linear-gradient(180deg, rgba(124,199,255,.22), rgba(124,199,255,.10));
+      border-color:#7cc7ff88;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:16px;
+    }
+
+    .panel{
+      background:linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, #fff 8%), var(--panel));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .panel > .hd{
+      padding:18px 18px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background:linear-gradient(180deg, color-mix(in srgb, var(--panel-2) 55%, transparent), transparent);
+    }
+    .panel > .hd h2{
+      margin:0 0 6px;
+      font-size:1.1rem;
+    }
+    .panel > .hd p{
+      margin:0;
+      color:var(--muted);
+      font-size:.93rem;
+    }
+    .panel > .bd{
+      padding:16px 18px 18px;
+    }
+
+    .row{
+      display:grid;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .cols-2{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    label{
+      display:block;
+      margin:0 0 6px;
+      font-size:.9rem;
+      font-weight:700;
+      color:#dce6ff;
+    }
+    input[type="text"], input[type="file"], textarea, select{
+      width:100%;
+      border:1px solid var(--line);
+      background:color-mix(in srgb, var(--bg) 78%, var(--panel) 22%);
+      color:var(--text);
+      border-radius:14px;
+      padding:12px 13px;
+      font:inherit;
+      outline:none;
+    }
+    textarea{
+      min-height:136px;
+      resize:vertical;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:.88rem;
+      line-height:1.45;
+      word-break:break-all;
+    }
+    input[type="file"]{
+      padding:10px 12px;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    button{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 14px;
+      min-height:44px;
+      font-weight:800;
+      font-size:.95rem;
+      color:#09111f;
+      background:linear-gradient(180deg, var(--accent), #5db4f4);
+      box-shadow:0 8px 18px rgba(76,156,224,.28);
+    }
+    button.secondary{
+      background:linear-gradient(180deg, #dce7ff, #b9caf3);
+    }
+    button.ghost{
+      background:transparent;
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+    button.good{
+      background:linear-gradient(180deg, var(--accent-2), #66d9a6);
+    }
+    button.warn{
+      background:linear-gradient(180deg, #ffe299, #ffc95f);
+    }
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+    .stack{display:flex; flex-direction:column; gap:12px;}
+    .hide{display:none!important;}
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      word-break:break-all;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns:140px 1fr;
+      gap:8px 12px;
+      font-size:.92rem;
+      align-items:start;
+    }
+    .kv div:nth-child(odd){
+      color:var(--muted);
+    }
+    .status{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:color-mix(in srgb, var(--panel-2) 68%, transparent);
+      border:1px solid rgba(255,255,255,.08);
+      white-space:pre-wrap;
+      word-break:break-word;
+      min-height:52px;
+    }
+    .status.good{border-color:#67d6a844; background:rgba(102,217,166,.08)}
+    .status.warn{border-color:#ffd36c55; background:rgba(255,211,108,.10)}
+    .status.bad{border-color:#ff989855; background:rgba(255,152,152,.10)}
+    .note{
+      color:var(--muted);
+      font-size:.88rem;
+    }
+    .pill{
+      display:inline-block;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:5px 9px;
+      margin:3px 6px 0 0;
+      color:#d9e6ff;
+      font-size:.82rem;
+      background:color-mix(in srgb, var(--panel-2) 55%, transparent);
+    }
+    .summary-box{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.16);
+      background:color-mix(in srgb, var(--panel-2) 42%, transparent);
+    }
+    details{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px 14px;
+      background:color-mix(in srgb, var(--panel-2) 55%, transparent);
+    }
+    details summary{
+      cursor:pointer;
+      font-weight:800;
+      color:#e9f0ff;
+      margin:-2px 0;
+    }
+    .footer{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:.84rem;
+    }
+    .small{font-size:.84rem}
+    .align-right{text-align:right}
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+      .callout{grid-template-columns:1fr}
+      .cols-2{grid-template-columns:1fr}
+      .kv{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="hero">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h1 class="title">Secure File Box</h1>
+          <p class="subtitle">鍵生成 / 暗号化 / 復号を1つのページで行えます。</p>
+        </div>
+        <button id="theme-toggle" class="ghost" type="button" aria-label="表示テーマを切り替え">Light mode</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="機能切り替え">
+      <button class="tab active" data-tab="keys">1. 鍵管理</button>
+      <button class="tab" data-tab="encrypt">2. 暗号化</button>
+      <button class="tab" data-tab="decrypt">3. 復号</button>
+    </nav>
+
+    <div id="tab-keys" class="tabpane">
+      <div class="grid">
+        <section class="panel">
+          <div class="hd">
+            <h2>鍵ペアを作る / 保存する</h2>
+            <p>このページで鍵ペアを新規生成できます。公開鍵は送信者へ渡し、秘密鍵は自分だけで保管します。</p>
+          </div>
+          <div class="bd stack">
+            <div class="actions">
+              <button id="btn-generate">新しい鍵ペアを生成</button>
+              <button id="btn-save-private" class="secondary" disabled>秘密鍵をファイル保存</button>
+              <button id="btn-save-public" class="ghost" disabled>公開鍵をファイル保存</button>
+              <button id="btn-store-local" class="ghost" disabled>この端末に秘密鍵を保存</button>
+              <button id="btn-clear-local" class="ghost">端末保存を削除</button>
+            </div>
+
+            <div class="row">
+              <div>
+                <label for="public-key-box">公開鍵</label>
+                <textarea id="public-key-box" placeholder="鍵生成後にここへ表示されます"></textarea>
+                <div class="actions">
+                  <button id="btn-copy-public" class="ghost" disabled>公開鍵をコピー</button>
+                </div>
+              </div>
+              <div>
+                <label for="private-key-box">秘密鍵</label>
+                <textarea id="private-key-box" placeholder="鍵生成後にここへ表示されます"></textarea>
+                <div class="actions">
+                  <button id="btn-copy-private" class="ghost" disabled>秘密鍵をコピー</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-box">
+              <strong>端末保存状態</strong>
+              <div id="local-key-state" class="small" style="margin-top:6px;">保存されていません</div>
+            </div>
+
+            <div class="status" id="status-keys">ここに鍵管理の結果が表示されます。</div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="hd">
+            <h2>鍵の読み込み</h2>
+            <p>受信者として復号したい場合は、秘密鍵をここで読み込みます。</p>
+          </div>
+          <div class="bd stack">
+            <div>
+              <label for="import-private-box">秘密鍵を貼り付け</label>
+              <textarea id="import-private-box" placeholder="SFB-PRIVATE-KEY-1...."></textarea>
+            </div>
+            <div>
+              <label for="import-private-file">または秘密鍵ファイルを選択</label>
+              <input id="import-private-file" type="file" accept=".txt,.key,.sfb,.priv,text/plain" />
+            </div>
+            <div class="actions">
+              <button id="btn-import-private" class="good">秘密鍵を読み込む</button>
+              <button id="btn-load-local" class="ghost">端末保存から読み込む</button>
+            </div>
+            <div class="summary-box">
+              <strong>現在の秘密鍵に対応する公開鍵</strong>
+              <div id="derived-public" class="mono small" style="margin-top:6px;">未読み込み</div>
+            </div>
+            <div class="status" id="status-import">ここに読み込み結果が表示されます。</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="tab-encrypt" class="tabpane hide">
+      <div class="grid">
+        <section class="panel">
+          <div class="hd">
+            <h2>ファイルを暗号化</h2>
+            <p>相手の公開鍵で暗号化します。できあがった暗号化ファイルを送ってください。</p>
+          </div>
+          <div class="bd stack">
+            <div>
+              <label for="recipient-public-key">相手の公開鍵</label>
+              <textarea id="recipient-public-key" placeholder="SFB-PUBLIC-KEY-1...."></textarea>
+            </div>
+            <div>
+              <label for="encrypt-file">暗号化したいファイル</label>
+              <input id="encrypt-file" type="file" />
+            </div>
+            <div class="summary-box">
+              <strong>対象ファイル</strong>
+              <div id="encrypt-file-summary" class="small" style="margin-top:6px;">未選択</div>
+            </div>
+            <div class="actions">
+              <button id="btn-encrypt">暗号化して保存</button>
+              <button id="btn-use-derived-public" class="ghost">自分の公開鍵をここへ入れる</button>
+            </div>
+            <div class="status" id="status-encrypt">ここに暗号化結果が表示されます。</div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="hd">
+            <h2>使い方</h2>
+            <p>送信側は相手の公開鍵だけを使います。</p>
+          </div>
+          <div class="bd stack">
+            <details open>
+              <summary>送るときの流れ</summary>
+              <ol class="small">
+                <li>受信者が「鍵管理」で鍵ペア生成</li>
+                <li>受信者は公開鍵だけ送る</li>
+                <li>送信者がその公開鍵でファイルを暗号化</li>
+                <li>できた <span class="mono">.sfbx</span> を送る</li>
+                <li>受信者は自分の秘密鍵で復号</li>
+              </ol>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="tab-decrypt" class="tabpane hide">
+      <div class="grid">
+        <section class="panel">
+          <div class="hd">
+            <h2>暗号化ファイルを復号</h2>
+            <p>秘密鍵を読み込んでから、受け取った暗号化ファイルを復号します。</p>
+          </div>
+          <div class="bd stack">
+            <div>
+              <label for="decrypt-file">暗号化ファイル</label>
+              <input id="decrypt-file" type="file" accept=".sfbx,.json,text/plain,application/json" />
+            </div>
+            <div>
+              <label for="decrypt-private-box">秘密鍵（未読み込みならここに貼り付け）</label>
+              <textarea id="decrypt-private-box" placeholder="SFB-PRIVATE-KEY-1...."></textarea>
+            </div>
+            <div class="actions">
+              <button id="btn-decrypt" class="good">復号して保存</button>
+              <button id="btn-fill-decrypt-private" class="ghost">現在の秘密鍵をここへ入れる</button>
+            </div>
+            <div class="summary-box">
+              <strong>暗号化ファイル情報</strong>
+              <div id="decrypt-summary" class="small" style="margin-top:6px;">未選択</div>
+            </div>
+            <div class="status" id="status-decrypt">ここに復号結果が表示されます。</div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="hd">
+            <h2>受信者向けメモ</h2>
+            <p>秘密鍵は自分だけで保管してください。</p>
+          </div>
+          <div class="bd stack">
+            <details open>
+              <summary>おすすめ運用</summary>
+              <ul class="small">
+                <li>秘密鍵はファイル保存して控えを持つ</li>
+                <li>公開鍵は電話など別ルートでも確認する</li>
+                <li>共有端末では端末保存を使わない</li>
+              </ul>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="footer">
+共有端末では「端末に保存」は使わず、秘密鍵をファイル保存して管理してください。
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  const KEY_PREFIX_PUBLIC = "SFB-PUBLIC-KEY-1.";
+  const KEY_PREFIX_PRIVATE = "SFB-PRIVATE-KEY-1.";
+  const ENVELOPE_VERSION = 1;
+  const ENVELOPE_TYPE = "SFB-ENC-FILE-1";
+  const LOCAL_KEY_NAME = "sfb_private_key_v1";
+  const THEME_KEY = "sfb_theme_v1";
+  const DERIVE_INFO = new TextEncoder().encode("SecureFileBox v1 file key");
+  const SUPPORTED_CURVE = "P-256";
+
+  let currentPrivateKey = null;
+  let currentPublicKey = null;
+  let currentPrivateKeyText = "";
+  let currentPublicKeyText = "";
+
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(id, message, kind = "") {
+    const el = $(id);
+    el.textContent = message;
+    el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function ab2b64(buffer) {
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  function b642ab(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  function utf8ToB64(s) {
+    return btoa(unescape(encodeURIComponent(s)));
+  }
+
+  function b64ToUtf8(s) {
+    return decodeURIComponent(escape(atob(s)));
+  }
+
+  function canonicalize(obj) {
+    if (obj === null || typeof obj !== "object") return JSON.stringify(obj);
+    if (Array.isArray(obj)) return "[" + obj.map(canonicalize).join(",") + "]";
+    const keys = Object.keys(obj).sort();
+    return "{" + keys.map(k => JSON.stringify(k) + ":" + canonicalize(obj[k])).join(",") + "}";
+  }
+
+  function trimKeyText(s) {
+    return (s || "").trim().replace(/\s+/g, "");
+  }
+
+  function downloadBlob(blob, name) {
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1200);
+  }
+
+  function fmtBytes(n) {
+    if (!Number.isFinite(n)) return "-";
+    const units = ["B","KB","MB","GB"];
+    let i = 0, x = n;
+    while (x >= 1024 && i < units.length - 1) { x /= 1024; i++; }
+    return `${x.toFixed(x >= 100 || i === 0 ? 0 : x >= 10 ? 1 : 2)} ${units[i]}`;
+  }
+
+  function extFromName(name) {
+    const i = name.lastIndexOf(".");
+    return i >= 0 ? name.slice(i) : "";
+  }
+
+  async function exportKeysToText(keyPair) {
+    const pubJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+    const privJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    const pub = KEY_PREFIX_PUBLIC + utf8ToB64(canonicalize(pubJwk));
+    const priv = KEY_PREFIX_PRIVATE + utf8ToB64(canonicalize(privJwk));
+    return { pubJwk, privJwk, pub, priv };
+  }
+
+  async function importPublicKey(text) {
+    const cleaned = trimKeyText(text);
+    if (!cleaned.startsWith(KEY_PREFIX_PUBLIC)) {
+      throw new Error("公開鍵の形式が違います。");
+    }
+    const payload = cleaned.slice(KEY_PREFIX_PUBLIC.length);
+    const jwk = JSON.parse(b64ToUtf8(payload));
+    if (jwk.kty !== "EC" || jwk.crv !== SUPPORTED_CURVE || !jwk.x || !jwk.y) {
+      throw new Error("対応していない公開鍵です。");
+    }
+    const key = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      []
+    );
+    return { key, jwk, text: cleaned };
+  }
+
+  async function importPrivateKey(text) {
+    const cleaned = trimKeyText(text);
+    if (!cleaned.startsWith(KEY_PREFIX_PRIVATE)) {
+      throw new Error("秘密鍵の形式が違います。");
+    }
+    const payload = cleaned.slice(KEY_PREFIX_PRIVATE.length);
+    const jwk = JSON.parse(b64ToUtf8(payload));
+    if (jwk.kty !== "EC" || jwk.crv !== SUPPORTED_CURVE || !jwk.d || !jwk.x || !jwk.y) {
+      throw new Error("対応していない秘密鍵です。");
+    }
+    const key = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      ["deriveBits"]
+    );
+    const publicJwk = { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y };
+    const publicKey = await crypto.subtle.importKey(
+      "jwk",
+      publicJwk,
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      []
+    );
+    return { key, jwk, publicJwk, publicKey, text: cleaned, publicText: KEY_PREFIX_PUBLIC + utf8ToB64(canonicalize(publicJwk)) };
+  }
+
+  async function deriveAesKey(myPrivateKey, theirPublicKey, saltBytes) {
+    const bits = await crypto.subtle.deriveBits(
+      { name: "ECDH", public: theirPublicKey },
+      myPrivateKey,
+      256
+    );
+    const hkdfBase = await crypto.subtle.importKey("raw", bits, "HKDF", false, ["deriveKey"]);
+    return await crypto.subtle.deriveKey(
+      { name: "HKDF", hash: "SHA-256", salt: saltBytes, info: DERIVE_INFO },
+      hkdfBase,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  async function encryptFile(file, recipientKeyText) {
+    const { key: recipientPub, text: recipientText } = await importPublicKey(recipientKeyText);
+    const eph = await crypto.subtle.generateKey(
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      ["deriveBits"]
+    );
+    const ephPubJwk = await crypto.subtle.exportKey("jwk", eph.publicKey);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const aesKey = await deriveAesKey(eph.privateKey, recipientPub, salt);
+    const plain = await file.arrayBuffer();
+    const aadObj = {
+      t: ENVELOPE_TYPE,
+      v: ENVELOPE_VERSION,
+      alg: "ECDH-P256/HKDF-SHA256/AES-256-GCM",
+      epk: ephPubJwk,
+      name: file.name || "file",
+      type: file.type || "application/octet-stream",
+      size: plain.byteLength,
+      mtime: file.lastModified || Date.now()
+    };
+    const aadText = canonicalize(aadObj);
+    const aad = new TextEncoder().encode(aadText);
+    const cipher = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv, additionalData: aad },
+      aesKey,
+      plain
+    );
+    const envelope = {
+      t: ENVELOPE_TYPE,
+      v: ENVELOPE_VERSION,
+      alg: "ECDH-P256/HKDF-SHA256/AES-256-GCM",
+      epk: ephPubJwk,
+      salt: ab2b64(salt),
+      iv: ab2b64(iv),
+      name: file.name || "file",
+      type: file.type || "application/octet-stream",
+      size: plain.byteLength,
+      mtime: file.lastModified || Date.now(),
+      data: ab2b64(cipher)
+    };
+    const outName = (file.name || "file") + ".sfbx";
+    const json = JSON.stringify(envelope);
+    return {
+      blob: new Blob([json], { type: "application/json" }),
+      outName,
+      meta: {
+        recipientText,
+        inputSize: plain.byteLength,
+        outputSize: json.length
+      }
+    };
+  }
+
+  async function decryptEnvelope(file, privateKeyText) {
+    const { key: myPrivateKey, publicText } = await importPrivateKey(privateKeyText);
+    const text = await file.text();
+    const env = JSON.parse(text);
+    if (env.t !== ENVELOPE_TYPE || env.v !== ENVELOPE_VERSION) {
+      throw new Error("暗号化ファイルの形式が違います。");
+    }
+    if (!env.epk || !env.salt || !env.iv || !env.data) {
+      throw new Error("暗号化ファイルが壊れているか、必要な項目がありません。");
+    }
+
+    const ephPub = await crypto.subtle.importKey(
+      "jwk",
+      env.epk,
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      []
+    );
+
+    const salt = new Uint8Array(b642ab(env.salt));
+    const iv = new Uint8Array(b642ab(env.iv));
+    const cipher = b642ab(env.data);
+    const aesKey = await deriveAesKey(myPrivateKey, ephPub, salt);
+
+    const aadObj = {
+      t: env.t,
+      v: env.v,
+      alg: env.alg,
+      epk: env.epk,
+      name: env.name,
+      type: env.type,
+      size: env.size,
+      mtime: env.mtime
+    };
+    const aad = new TextEncoder().encode(canonicalize(aadObj));
+    const plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv, additionalData: aad },
+      aesKey,
+      cipher
+    );
+    const outBlob = new Blob([plain], { type: env.type || "application/octet-stream" });
+    return {
+      blob: outBlob,
+      fileName: env.name || "decrypted.bin",
+      meta: {
+        type: env.type || "application/octet-stream",
+        size: env.size ?? outBlob.size,
+        mtime: env.mtime,
+        loadedPublicText: publicText
+      }
+    };
+  }
+
+  async function generateNewKeys() {
+    const pair = await crypto.subtle.generateKey(
+      { name: "ECDH", namedCurve: SUPPORTED_CURVE },
+      true,
+      ["deriveBits"]
+    );
+    const { pub, priv } = await exportKeysToText(pair);
+    currentPrivateKey = pair.privateKey;
+    currentPublicKey = pair.publicKey;
+    currentPrivateKeyText = priv;
+    currentPublicKeyText = pub;
+    $("public-key-box").value = pub;
+    $("private-key-box").value = priv;
+    $("import-private-box").value = priv;
+    $("derived-public").textContent = pub;
+    $("btn-save-private").disabled = false;
+    $("btn-save-public").disabled = false;
+    $("btn-copy-public").disabled = false;
+    $("btn-copy-private").disabled = false;
+    $("btn-store-local").disabled = false;
+    setStatus("status-keys", "新しい鍵ペアを生成しました。公開鍵だけ共有し、秘密鍵は自分だけで保持してください。", "good");
+    updateLocalState();
+  }
+
+  async function loadCurrentPrivate(text) {
+    const loaded = await importPrivateKey(text);
+    currentPrivateKey = loaded.key;
+    currentPublicKey = loaded.publicKey;
+    currentPrivateKeyText = loaded.text;
+    currentPublicKeyText = loaded.publicText;
+    $("private-key-box").value = loaded.text;
+    $("import-private-box").value = loaded.text;
+    $("decrypt-private-box").value = loaded.text;
+    $("public-key-box").value = loaded.publicText;
+    $("derived-public").textContent = loaded.publicText;
+    $("btn-save-private").disabled = false;
+    $("btn-save-public").disabled = false;
+    $("btn-copy-public").disabled = false;
+    $("btn-copy-private").disabled = false;
+    $("btn-store-local").disabled = false;
+    return loaded.publicText;
+  }
+
+  function saveLocalKey(text) {
+    localStorage.setItem(LOCAL_KEY_NAME, text);
+    updateLocalState();
+  }
+
+  function clearLocalKey() {
+    localStorage.removeItem(LOCAL_KEY_NAME);
+    updateLocalState();
+  }
+
+  function updateLocalState() {
+    const has = !!localStorage.getItem(LOCAL_KEY_NAME);
+    $("local-key-state").textContent = has ? "この端末に秘密鍵が保存されています" : "保存されていません";
+  }
+
+  async function copyText(text) {
+    await navigator.clipboard.writeText(text);
+  }
+
+  function applyTheme(theme) {
+    const safeTheme = theme === "light" ? "light" : "dark";
+    document.body.setAttribute("data-theme", safeTheme);
+    localStorage.setItem(THEME_KEY, safeTheme);
+    const btn = $("theme-toggle");
+    if (btn) btn.textContent = safeTheme === "light" ? "Dark mode" : "Light mode";
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    applyTheme(saved || "dark");
+  }
+
+  function wireTabs() {
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        document.querySelectorAll(".tabpane").forEach(p => p.classList.add("hide"));
+        $("tab-" + tab).classList.remove("hide");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+  }
+
+  function wireKeyInputs() {
+
+    $("encrypt-file").addEventListener("change", () => {
+      const f = $("encrypt-file").files?.[0];
+      $("encrypt-file-summary").textContent = f ? `${f.name} / ${fmtBytes(f.size)} / ${f.type || "type未設定"}` : "未選択";
+    });
+
+    $("decrypt-file").addEventListener("change", () => {
+      const f = $("decrypt-file").files?.[0];
+      $("decrypt-summary").textContent = f ? `${f.name} / ${fmtBytes(f.size)}` : "未選択";
+    });
+
+    $("import-private-file").addEventListener("change", async () => {
+      const f = $("import-private-file").files?.[0];
+      if (!f) return;
+      $("import-private-box").value = await f.text();
+    });
+  }
+
+  async function init() {
+    initTheme();
+    wireTabs();
+    wireKeyInputs();
+    updateLocalState();
+
+    $("theme-toggle").addEventListener("click", () => {
+      const next = document.body.getAttribute("data-theme") === "light" ? "dark" : "light";
+      applyTheme(next);
+    });
+
+    if (!window.crypto?.subtle) {
+      setStatus("status-keys", "このブラウザは Web Crypto API に対応していないため使えません。", "bad");
+      setStatus("status-encrypt", "Web Crypto API 非対応です。", "bad");
+      setStatus("status-decrypt", "Web Crypto API 非対応です。", "bad");
+      return;
+    }
+
+    $("btn-generate").addEventListener("click", async () => {
+      try {
+        await generateNewKeys();
+      } catch (err) {
+        setStatus("status-keys", "鍵生成に失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-save-private").addEventListener("click", () => {
+      if (!currentPrivateKeyText) return;
+      downloadBlob(new Blob([currentPrivateKeyText + "\n"], { type: "text/plain;charset=utf-8" }), "private-key.sfb.txt");
+      setStatus("status-keys", "秘密鍵をファイル保存しました。", "good");
+    });
+
+    $("btn-save-public").addEventListener("click", () => {
+      if (!currentPublicKeyText) return;
+      downloadBlob(new Blob([currentPublicKeyText + "\n"], { type: "text/plain;charset=utf-8" }), "public-key.sfb.txt");
+      setStatus("status-keys", "公開鍵をファイル保存しました。", "good");
+    });
+
+    $("btn-store-local").addEventListener("click", () => {
+      if (!currentPrivateKeyText) return;
+      saveLocalKey(currentPrivateKeyText);
+      setStatus("status-keys", "秘密鍵をこの端末のローカル保存へ記録しました。共有端末では使わないでください。", "warn");
+    });
+
+    $("btn-clear-local").addEventListener("click", () => {
+      clearLocalKey();
+      setStatus("status-keys", "端末保存の秘密鍵を削除しました。", "good");
+      setStatus("status-import", "端末保存を削除しました。");
+    });
+
+    $("btn-copy-public").addEventListener("click", async () => {
+      try {
+        await copyText($("public-key-box").value);
+        setStatus("status-keys", "公開鍵をコピーしました。", "good");
+      } catch (err) {
+        setStatus("status-keys", "コピーに失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-copy-private").addEventListener("click", async () => {
+      try {
+        await copyText($("private-key-box").value);
+        setStatus("status-keys", "秘密鍵をコピーしました。貼り付け先に注意してください。", "warn");
+      } catch (err) {
+        setStatus("status-keys", "コピーに失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-import-private").addEventListener("click", async () => {
+      try {
+        const text = $("import-private-box").value.trim();
+        if (!text) throw new Error("秘密鍵を入力してください。");
+        const publicText = await loadCurrentPrivate(text);
+        setStatus("status-import", "秘密鍵を読み込みました。対応する公開鍵を更新しました。", "good");
+        setStatus("status-keys", "秘密鍵を読み込みました。", "good");
+      } catch (err) {
+        setStatus("status-import", "秘密鍵の読み込みに失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-load-local").addEventListener("click", async () => {
+      try {
+        const text = localStorage.getItem(LOCAL_KEY_NAME);
+        if (!text) throw new Error("この端末に秘密鍵が保存されていません。");
+        $("import-private-box").value = text;
+        const publicText = await loadCurrentPrivate(text);
+        setStatus("status-import", "端末保存から秘密鍵を読み込みました。", "good");
+      } catch (err) {
+        setStatus("status-import", "読み込みに失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-use-derived-public").addEventListener("click", () => {
+      if (!currentPublicKeyText) {
+        setStatus("status-encrypt", "先に鍵を生成または読み込んでください。", "warn");
+        return;
+      }
+      $("recipient-public-key").value = currentPublicKeyText;
+      setStatus("status-encrypt", "現在の公開鍵を暗号化先としてセットしました。", "good");
+    });
+
+    $("btn-encrypt").addEventListener("click", async () => {
+      try {
+        const file = $("encrypt-file").files?.[0];
+        const pub = $("recipient-public-key").value.trim();
+        if (!file) throw new Error("暗号化するファイルを選んでください。");
+        if (!pub) throw new Error("相手の公開鍵を入力してください。");
+        setStatus("status-encrypt", "暗号化中です。ファイルサイズによって少し時間がかかります。");
+        const result = await encryptFile(file, pub);
+        downloadBlob(result.blob, result.outName);
+        setStatus(
+          "status-encrypt",
+          `暗号化が完了しました。\n出力: ${result.outName}\n元サイズ: ${fmtBytes(result.meta.inputSize)}\n出力サイズ: ${fmtBytes(result.meta.outputSize)}`,
+          "good"
+        );
+      } catch (err) {
+        setStatus("status-encrypt", "暗号化に失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    $("btn-fill-decrypt-private").addEventListener("click", () => {
+      if (!currentPrivateKeyText) {
+        setStatus("status-decrypt", "先に鍵を生成または秘密鍵を読み込んでください。", "warn");
+        return;
+      }
+      $("decrypt-private-box").value = currentPrivateKeyText;
+      setStatus("status-decrypt", "現在の秘密鍵を復号欄へセットしました。", "good");
+    });
+
+    $("btn-decrypt").addEventListener("click", async () => {
+      try {
+        const file = $("decrypt-file").files?.[0];
+        const priv = $("decrypt-private-box").value.trim() || currentPrivateKeyText;
+        if (!file) throw new Error("復号する暗号化ファイルを選んでください。");
+        if (!priv) throw new Error("秘密鍵を入力または読み込んでください。");
+        setStatus("status-decrypt", "復号中です。");
+        const result = await decryptEnvelope(file, priv);
+        downloadBlob(result.blob, result.fileName);
+        const date = result.meta.mtime ? new Date(result.meta.mtime).toLocaleString() : "-";
+        setStatus(
+          "status-decrypt",
+          `復号が完了しました。\nファイル名: ${result.fileName}\n種類: ${result.meta.type}\nサイズ: ${fmtBytes(result.meta.size)}\n元更新時刻: ${date}`,
+          "good"
+        );
+      } catch (err) {
+        setStatus("status-decrypt", "復号に失敗しました: " + (err?.message || err), "bad");
+      }
+    });
+
+    setStatus("status-keys", "このHTMLだけで使えます。まずは「新しい鍵ペアを生成」を押してください。");
+    setStatus("status-import", "秘密鍵を貼り付けるか、ファイルから読み込んでください。");
+    setStatus("status-encrypt", "相手の公開鍵と暗号化するファイルを指定してください。");
+    setStatus("status-decrypt", "暗号化ファイルと秘密鍵を指定してください。");
+  }
+
+  init().catch(err => {
+    setStatus("status-keys", "初期化に失敗しました: " + (err?.message || err), "bad");
+  });
+})();
+</script>
+
+</body>
+</html>
